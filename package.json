@@ -3,7 +3,7 @@
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
+    "start": "REACT_NATIVE_PACKAGER_HOSTNAME='192.168.6.119' expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
