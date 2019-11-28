@@ -33,6 +33,7 @@ export const Widget: React.FC<Props> = ({
 }) => {
   return (
     <View
+      pointerEvents="box-none"
       style={{
         transform: [
           { translateY: translate },
@@ -43,30 +44,45 @@ export const Widget: React.FC<Props> = ({
       }}
     >
       <View
+        pointerEvents="box-none"
         style={{
           minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
           height: ITEM_HEIGHT - offset
         }}
       >
         <BlurView
+          pointerEvents="box-none"
           tint={theme.blurTint}
           intensity={100}
           style={[styles.widgetBlurredContainer, {
             marginBottom: margin
           }]}
         >
-          <View style={[styles.widgetHeader, {
-            height: ITEM_MIN_HEIGHT
-          }]}>
-            <View style={styles.widgetHeaderIcon}/>
-            <Text style={[styles.widgetHeaderLabel, {
-              color: theme.headerTextColor
-            }]}>
+          <View
+            pointerEvents="box-none"
+            style={[styles.widgetHeader, {
+              height: ITEM_MIN_HEIGHT
+            }]}
+          >
+            <View
+              pointerEvents="box-none"
+              style={styles.widgetHeaderIcon}
+            />
+            <Text
+              style={[styles.widgetHeaderLabel, {
+                color: theme.headerTextColor
+              }]}
+            >
               {label}
             </Text>
           </View>
-          <View style={styles.widgetWrapperContainer}>
-            <View style={styles.widgetWrapper}>
+          <View
+            pointerEvents="box-none"
+            style={styles.widgetWrapperContainer}>
+            <View
+              pointerEvents="box-none"
+              style={styles.widgetWrapper}
+            >
               {children}
             </View>
           </View>

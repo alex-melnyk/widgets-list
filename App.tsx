@@ -53,9 +53,15 @@ const styles = StyleSheet.create({
 const ITEMS = [...new Array(10)].map(() => ({
   label: randomName(),
   content: (
-    <View style={styles.widgetContent}>
+    <View
+      pointerEvents="box-none"
+      style={styles.widgetContent}
+    >
       {[...new Array(4)].map((item, idx) => (
-        <View key={`wiget_content_item_${idx}`}>
+        <View
+          pointerEvents="box-none"
+          key={`wiget_content_item_${idx}`}
+        >
           <TouchableOpacity
             style={[styles.widgetContentIcon, {
               backgroundColor: randomColor()
