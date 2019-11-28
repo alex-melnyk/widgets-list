@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, SafeAreaView, TouchableOpacity, View } from 'react-native';
 import { randomColor, randomName } from './src/utils';
 import { WidgetsList } from './src/components';
 

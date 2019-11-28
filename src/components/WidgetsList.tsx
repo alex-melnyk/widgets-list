@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import Constants from 'expo-constants';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget } from './Widget';
 
 interface ITheme {
@@ -85,23 +84,33 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.widgetsListContainer}>
+      <View
+        onStartShouldSetResponder={() => {
+
+          return true;
+        }}
+        style={styles.widgetsListContainer}
+      >
         {itemsList}
       </View>
-      <ScrollView
+      <FlatList
+        style={{
+          backgroundColor: 'transparent'
+        }}
         pointerEvents="box-none"
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={32}
         onScroll={({ nativeEvent: { contentOffset: { y } } }) => setScroll(y)}
-      >
-        <View
-          style={{
-            width: 0,
-            height: (ITEM_HEIGHT + ITEM_OFFSET) * itemsList.length
-          }}
-        />
-      </ScrollView>
+        keyExtractor={(val, idx) => `item_${idx}`}
+        data={[0]}
+        renderItem={() => (
+          <View
+            pointerEvents="none"
+            style={{ height: (ITEM_HEIGHT + ITEM_OFFSET) * itemsList.length }}
+          />
+        )}
+      />
     </View>
   );
 };
@@ -112,7 +121,8 @@ const styles = StyleSheet.create({
     marginHorizontal: ITEM_OFFSET
   },
   scroll: {
-    flexGrow: 1
+    flexGrow: 1,
+    backgroundColor: 'transparent'
   },
   widgetsListContainer: {
     position: 'absolute',
