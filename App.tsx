@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, Text, SafeAreaView, TouchableOpacity, View } from 'react-native';
+import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { randomColor, randomName } from './src/utils';
 import { WidgetsList } from './src/components';
 
@@ -53,15 +53,9 @@ const styles = StyleSheet.create({
 const ITEMS = [...new Array(10)].map(() => ({
   label: randomName(),
   content: (
-    <View
-      pointerEvents="box-none"
-      style={styles.widgetContent}
-    >
+    <View style={styles.widgetContent}>
       {[...new Array(4)].map((item, idx) => (
-        <View
-          pointerEvents="box-none"
-          key={`wiget_content_item_${idx}`}
-        >
+        <View key={`wiget_content_item_${idx}`}>
           <TouchableOpacity
             style={[styles.widgetContentIcon, {
               backgroundColor: randomColor()
@@ -70,7 +64,7 @@ const ITEMS = [...new Array(10)].map(() => ({
           />
           <Text
             style={[styles.widgetContentIconLabel, {
-              color: 'white'
+              color: '#FFFFFF'
             }]}
           >
             {randomName()}

@@ -27,15 +27,6 @@ type Props = {
 
 export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   const [scroll, setScroll] = useState(0);
-  const [isEnabled, setIsEnabled] = useState(false);
-
-  const setScrollViewScroll = (enabled: boolean): boolean => {
-    if (enabled !== isEnabled) {
-      setIsEnabled(enabled);
-    }
-
-    return false;
-  };
 
   const itemsList = useMemo(() => {
     const effort = scroll / ITEM_HEIGHT;
@@ -110,10 +101,7 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
           />
         )}
       />
-      <View
-        pointerEvents="box-none"
-        style={styles.widgetsListContainer}
-      >
+      <View style={styles.widgetsListContainer}>
         {itemsList}
       </View>
     </View>
