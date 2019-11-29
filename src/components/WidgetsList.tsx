@@ -36,6 +36,11 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
     const effort = location / ITEM_HEIGHT;
     const count = Math.abs(effort);
 
+    const startOffset = ITEM_HEIGHT - ITEM_MIN_HEIGHT - ITEM_OFFSET;
+    const itemHeightWithOffset = ITEM_HEIGHT + ITEM_MIN_HEIGHT;
+    const opacityDiv =  ITEM_HEIGHT / 2;
+    const scaleMul = ITEM_HEIGHT * 5;
+
     return items.map((item, idx) => {
       let offset = 0;
       let scale = 1.0;
@@ -43,24 +48,27 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
       let margin = ITEM_OFFSET;
       let translate = 0;
 
-      // if (location < 0) {
-      //   translate = Math.abs(location);
-      // }
+      if (location < 0) {
+        translate = Math.abs(location);
+      }
 
       if (idx <= count) {
         const delta = location - (ITEM_HEIGHT * idx);
+        const deltaStart = delta - startOffset;
 
-        offset = delta > ITEM_HEIGHT ? ITEM_HEIGHT : delta < 0 ? 0 : delta;
+        offset = delta > ITEM_HEIGHT
+          ? ITEM_HEIGHT
+          : delta < 0
+            ? 0
+            : delta;
 
-        const startOffset = ITEM_HEIGHT - ITEM_MIN_HEIGHT - ITEM_OFFSET;
-
-        if (delta >= startOffset && delta <= (ITEM_HEIGHT + ITEM_MIN_HEIGHT)) {
-          opacity = 1.0 - (delta - startOffset) / (ITEM_HEIGHT / 2);
-          scale = 1.0 - (delta - startOffset) / (ITEM_HEIGHT * 5);
+        if (delta >= startOffset && delta <= itemHeightWithOffset) {
+          opacity = 1.0 - deltaStart / opacityDiv;
+          scale = 1.0 - deltaStart / scaleMul;
           const ty = delta - startOffset;
           translate = ty < 0 ? 0 : ty / 10;
 
-          const m = ITEM_OFFSET - ITEM_OFFSET * (delta - startOffset) / ITEM_HEIGHT;
+          const m = ITEM_OFFSET - (ITEM_OFFSET * deltaStart / ITEM_HEIGHT);
           margin = m >= 0 ? m : 0;
         } else if (delta >= ITEM_HEIGHT) {
           scale = 0;
@@ -99,7 +107,7 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
       }}
       onResponderReject={({ nativeEvent: { pageY } }) => {
         setCaptured(false);
-        setMovePoint(pageY);
+        // setMovePoint(pageY);
       }}
       onResponderMove={({ nativeEvent: { pageY } }) => {
         if (captured) {
