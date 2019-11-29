@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Animated, FlatList, StyleSheet, View } from 'react-native';
+import { Animated, FlatList, StyleSheet, View, Dimensions } from 'react-native';
 import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget } from './Widget';
+
+const {
+  width: screenWidth,
+  height: screenHeight
+} = Dimensions.get('screen');
 
 interface ITheme {
   [key: string]: IWidgetTheme;
@@ -54,21 +59,24 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
     const effort = location / ITEM_HEIGHT;
     const count = Math.abs(effort);
 
+    const totalVisibleElements = Math.round(screenHeight / ITEM_HEIGHT) + 3;
+    const invisibleElements = Math.floor(location / (ITEM_HEIGHT + ITEM_OFFSET)) - 1;
+
     const startOffset = ITEM_HEIGHT - ITEM_MIN_HEIGHT - ITEM_OFFSET;
     const itemHeightWithOffset = ITEM_HEIGHT + ITEM_MIN_HEIGHT;
     const opacityDiv =  ITEM_HEIGHT / 2;
     const scaleMul = ITEM_HEIGHT * 5;
 
     return items.map((item, idx) => {
+      const visible = idx >= invisibleElements && idx < invisibleElements + totalVisibleElements;
+
       const animatedValue = animatedValues[idx];
 
-      if (idx <= count) {
+      if (visible && location >= 0 && idx <= count) {
         const delta = location - (ITEM_HEIGHT * idx);
         const deltaStart = delta - startOffset;
 
-        animatedValue.offset = delta > ITEM_HEIGHT
-          ? 0
-          : delta < 0
+        animatedValue.offset = delta > ITEM_HEIGHT || delta < 0
             ? 0
             : ITEM_HEIGHT - delta;
 
@@ -89,6 +97,7 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
           theme={THEMES[themeName]}
           animated={animatedValue}
           label={item.label}
+          visible={visible}
         >
           {item.content}
         </Widget>

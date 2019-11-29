@@ -20,13 +20,15 @@ type Props = {
     offset: number;
   };
   label: string;
+  visible?: boolean;
 };
 
 export const Widget: React.FC<Props> = ({
+  children,
   theme,
   animated,
   label,
-  children
+  visible
 }) => {
   const headerBlock = useMemo(() => (
     <View
@@ -61,7 +63,8 @@ export const Widget: React.FC<Props> = ({
           { scaleY: animated.scale },
           { scaleX: animated.scale }
         ],
-        opacity: animated.opacity
+        opacity: visible ? animated.opacity : 0,
+        height: visible ? 'auto' : 0,
       }}
     >
       <Animated.View
