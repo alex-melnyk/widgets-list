@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget } from './Widget';
 
 interface ITheme {
@@ -26,10 +26,14 @@ type Props = {
 };
 
 export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
+  const [position, setPosition] = useState(0);
   const [scroll, setScroll] = useState(0);
+  const [movePoint, setMovePoint] = useState(0);
+  const [captured, setCaptured] = useState(false);
 
-  const itemsList = useMemo(() => {
-    const effort = scroll / ITEM_HEIGHT;
+  const itemsList = () => {
+    const location = position + scroll;
+    const effort = location / ITEM_HEIGHT;
     const count = Math.abs(effort);
 
     return items.map((item, idx) => {
@@ -39,12 +43,12 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
       let margin = ITEM_OFFSET;
       let translate = 0;
 
-      if (scroll < 0) {
-        translate = Math.abs(scroll);
-      }
+      // if (location < 0) {
+      //   translate = Math.abs(location);
+      // }
 
       if (idx <= count) {
-        const delta = scroll - (ITEM_HEIGHT * idx);
+        const delta = location - (ITEM_HEIGHT * idx);
 
         offset = delta > ITEM_HEIGHT ? ITEM_HEIGHT : delta < 0 ? 0 : delta;
 
@@ -80,29 +84,51 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
         </Widget>
       );
     });
-  }, [scroll]);
+  };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        style={{
-          backgroundColor: 'transparent'
-        }}
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={32}
-        onScroll={({ nativeEvent: { contentOffset: { y } } }) => setScroll(y)}
-        keyExtractor={(val, idx) => `item_${idx}`}
-        data={[0]}
-        renderItem={() => (
-          <View
-            pointerEvents="none"
-            style={{ height: (ITEM_HEIGHT + ITEM_OFFSET) * itemsList.length }}
-          />
-        )}
-      />
-      <View style={styles.widgetsListContainer}>
-        {itemsList}
+    <View
+      style={[styles.container, {
+        // backgroundColor: captured ? '#FF00009B' : 'transparent'
+      }]}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => false}
+      onResponderGrant={({ nativeEvent: { pageY } }) => {
+        setCaptured(true);
+        setMovePoint(pageY);
+      }}
+      onResponderReject={({ nativeEvent: { pageY } }) => {
+        setCaptured(false);
+        setMovePoint(pageY);
+      }}
+      onResponderMove={({ nativeEvent: { pageY } }) => {
+        if (captured) {
+          setScroll(movePoint - pageY);
+        }
+      }}
+      onResponderRelease={() => {
+        if (captured) {
+          setCaptured(false);
+          setPosition(position + scroll);
+        }
+        setMovePoint(0);
+        setScroll(0);
+      }}
+      onResponderTerminate={() => {
+        if (captured) {
+          setCaptured(false);
+          setPosition(position + scroll);
+        }
+        setMovePoint(0);
+        setScroll(0);
+      }}
+      onStartShouldSetResponderCapture={() => false}
+      onMoveShouldSetResponderCapture={() => true}
+    >
+      <View
+        style={styles.widgetsListContainer}
+      >
+        {itemsList()}
       </View>
     </View>
   );
@@ -111,7 +137,8 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginHorizontal: ITEM_OFFSET
+    marginHorizontal: ITEM_OFFSET,
+
   },
   scroll: {
     flexGrow: 1,

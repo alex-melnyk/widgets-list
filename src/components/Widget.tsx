@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
 export const ITEM_HEIGHT = 150;
@@ -32,7 +32,7 @@ export const Widget: React.FC<Props> = ({
   children
 }) => {
   return (
-    <View
+    <Animated.View
       style={{
         transform: [
           { translateY: translate },
@@ -42,7 +42,7 @@ export const Widget: React.FC<Props> = ({
         opacity: opacity
       }}
     >
-      <View
+      <Animated.View
         style={{
           minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
           height: ITEM_HEIGHT - offset
@@ -75,8 +75,8 @@ export const Widget: React.FC<Props> = ({
             </View>
           </View>
         </BlurView>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 };
 
