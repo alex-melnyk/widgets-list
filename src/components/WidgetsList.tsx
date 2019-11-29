@@ -84,10 +84,10 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.widgetsListContainer}>
+        {itemsList}
+      </View>
       <FlatList
-        style={{
-          backgroundColor: 'transparent'
-        }}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={32}
@@ -101,9 +101,6 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
           />
         )}
       />
-      <View style={styles.widgetsListContainer}>
-        {itemsList}
-      </View>
     </View>
   );
 };
