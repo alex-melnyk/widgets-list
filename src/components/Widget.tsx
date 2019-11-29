@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
@@ -13,70 +13,77 @@ export type IWidgetTheme = {
 
 type Props = {
   theme: IWidgetTheme
-  translate: number;
-  scale: number;
-  opacity: number;
-  offset: number;
-  margin: number;
+  animated: {
+    translate: number;
+    scale: number;
+    opacity: number;
+    offset: number;
+  };
   label: string;
 };
 
 export const Widget: React.FC<Props> = ({
   theme,
-  translate,
-  scale,
-  opacity,
-  offset,
-  margin,
+  animated,
   label,
   children
-}) => (
-  <Animated.View
-    style={{
-      transform: [
-        { translateY: translate },
-        { scaleY: scale },
-        { scaleX: scale }
-      ],
-      opacity: opacity
-    }}
-  >
-    <Animated.View
-      style={{
-        minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
-        height: ITEM_HEIGHT - offset
-      }}
+}) => {
+  const headerBlock = useMemo(() => (
+    <View
+      style={[styles.widgetHeader, {
+        height: ITEM_MIN_HEIGHT
+      }]}
     >
-      <BlurView
-        tint={theme.blurTint}
-        intensity={100}
-        style={[styles.widgetBlurredContainer, {
-          marginBottom: margin
+      <View style={styles.widgetHeaderIcon}/>
+      <Text
+        style={[styles.widgetHeaderLabel, {
+          color: theme.headerTextColor
         }]}
       >
-        <View
-          style={[styles.widgetHeader, {
-            height: ITEM_MIN_HEIGHT
+        {label}
+      </Text>
+    </View>
+  ), [theme, label]);
+
+  const contentBlock = useMemo(() => (
+    <View style={styles.widgetWrapperContainer}>
+      <View style={styles.widgetWrapper}>
+        {children}
+      </View>
+    </View>
+  ), [children]);
+
+  return (
+    <Animated.View
+      style={{
+        transform: [
+          { translateY: animated.translate },
+          { scaleY: animated.scale },
+          { scaleX: animated.scale }
+        ],
+        opacity: animated.opacity
+      }}
+    >
+      <Animated.View
+        style={{
+          minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
+          height: animated.offset
+        }}
+      >
+        <BlurView
+          tint={theme.blurTint}
+          intensity={100}
+          style={[styles.widgetBlurredContainer, {
+            marginBottom: ITEM_OFFSET
           }]}
         >
-          <View style={styles.widgetHeaderIcon}/>
-          <Text
-            style={[styles.widgetHeaderLabel, {
-              color: theme.headerTextColor
-            }]}
-          >
-            {label}
-          </Text>
-        </View>
-        <View style={styles.widgetWrapperContainer}>
-          <View style={styles.widgetWrapper}>
-            {children}
-          </View>
-        </View>
-      </BlurView>
+          {headerBlock}
+          {contentBlock}
+        </BlurView>
+      </Animated.View>
     </Animated.View>
-  </Animated.View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   widgetBlurredContainer: {
