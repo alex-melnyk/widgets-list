@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
 export const ITEM_HEIGHT = 150;
@@ -30,55 +30,53 @@ export const Widget: React.FC<Props> = ({
   margin,
   label,
   children
-}) => {
-  return (
-    <View
+}) => (
+  <Animated.View
+    style={{
+      transform: [
+        { translateY: translate },
+        { scaleY: scale },
+        { scaleX: scale }
+      ],
+      opacity: opacity
+    }}
+  >
+    <Animated.View
       style={{
-        transform: [
-          { translateY: translate },
-          { scaleY: scale },
-          { scaleX: scale }
-        ],
-        opacity: opacity
+        minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
+        height: ITEM_HEIGHT - offset
       }}
     >
-      <View
-        style={{
-          minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
-          height: ITEM_HEIGHT - offset
-        }}
+      <BlurView
+        tint={theme.blurTint}
+        intensity={100}
+        style={[styles.widgetBlurredContainer, {
+          marginBottom: margin
+        }]}
       >
-        <BlurView
-          tint={theme.blurTint}
-          intensity={100}
-          style={[styles.widgetBlurredContainer, {
-            marginBottom: margin
+        <View
+          style={[styles.widgetHeader, {
+            height: ITEM_MIN_HEIGHT
           }]}
         >
-          <View
-            style={[styles.widgetHeader, {
-              height: ITEM_MIN_HEIGHT
+          <View style={styles.widgetHeaderIcon}/>
+          <Text
+            style={[styles.widgetHeaderLabel, {
+              color: theme.headerTextColor
             }]}
           >
-            <View style={styles.widgetHeaderIcon}/>
-            <Text
-              style={[styles.widgetHeaderLabel, {
-                color: theme.headerTextColor
-              }]}
-            >
-              {label}
-            </Text>
+            {label}
+          </Text>
+        </View>
+        <View style={styles.widgetWrapperContainer}>
+          <View style={styles.widgetWrapper}>
+            {children}
           </View>
-          <View style={styles.widgetWrapperContainer}>
-            <View style={styles.widgetWrapper}>
-              {children}
-            </View>
-          </View>
-        </BlurView>
-      </View>
-    </View>
-  );
-};
+        </View>
+      </BlurView>
+    </Animated.View>
+  </Animated.View>
+);
 
 const styles = StyleSheet.create({
   widgetBlurredContainer: {
