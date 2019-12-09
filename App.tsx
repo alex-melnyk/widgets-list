@@ -1,18 +1,32 @@
-import React from 'react';
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Image, SafeAreaView, StatusBar, StatusBarStyle, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { randomColor, randomName } from './src/utils';
 import { WidgetsList } from './src/components';
 
-const THEMES = {
+const APP_THEME_NAME = 'light';
+
+type IAppTheme = {
+  [key: string]: {
+    statusBar: StatusBarStyle;
+    image: string;
+    contentColor: string;
+  };
+};
+
+const AppThemes: IAppTheme = {
   light: {
-    image: 'https://www.droidviews.com/wp-content/uploads/2019/06/ios-13-wallpaper-droidviews-04.jpg'
+    statusBar: 'light-content',
+    image: 'https://www.droidviews.com/wp-content/uploads/2019/06/ios-13-wallpaper-droidviews-04.jpg',
+    contentColor: '#000000'
   },
   dark: {
-    image: 'https://www.droidviews.com/wp-content/uploads/2019/06/ios-13-wallpaper-droidviews-01.jpg'
+    statusBar: 'dark-content',
+    image: 'https://www.droidviews.com/wp-content/uploads/2019/06/ios-13-wallpaper-droidviews-01.jpg',
+    contentColor: '#FFFFFF'
   }
 };
 
-const theme = THEMES['dark'];
+const appTheme = AppThemes[APP_THEME_NAME];
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -60,11 +74,11 @@ const ITEMS = [...new Array(10)].map(() => ({
             style={[styles.widgetContentIcon, {
               backgroundColor: randomColor()
             }]}
-            onPress={() => console.log('OK')}
+            onPress={() => console.log('Icon clicked')}
           />
           <Text
             style={[styles.widgetContentIconLabel, {
-              color: '#FFFFFF'
+              color: appTheme.contentColor
             }]}
           >
             {randomName()}
@@ -76,17 +90,21 @@ const ITEMS = [...new Array(10)].map(() => ({
 }));
 
 const App = () => {
+  useEffect(() => {
+    StatusBar.setBarStyle(appTheme.statusBar, true);
+  });
+
   return (
     <View style={styles.rootContainer}>
       <View style={styles.backContainer}>
         <Image
-          source={{ uri: theme.image }}
+          source={{ uri: appTheme.image }}
           style={styles.backImage}
         />
       </View>
       <SafeAreaView style={styles.screen}>
         <WidgetsList
-          themeName="dark"
+          themeName={APP_THEME_NAME}
           items={ITEMS}
         />
       </SafeAreaView>

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Animated, FlatList, StyleSheet, View, Dimensions } from 'react-native';
+import { FlatList, StyleSheet, View, Dimensions } from 'react-native';
 import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget } from './Widget';
 
 const {
