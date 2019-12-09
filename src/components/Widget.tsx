@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 
@@ -13,67 +13,75 @@ export type IWidgetTheme = {
 
 type Props = {
   theme: IWidgetTheme
-  translate: number;
-  scale: number;
-  opacity: number;
-  offset: number;
-  margin: number;
+  animated: {
+    translate: number;
+    scale: number;
+    opacity: number;
+    offset: number;
+  };
   label: string;
+  visible?: boolean;
 };
 
 export const Widget: React.FC<Props> = ({
+  children,
   theme,
-  translate,
-  scale,
-  opacity,
-  offset,
-  margin,
+  animated,
   label,
-  children
+  visible
 }) => {
+  const headerBlock = useMemo(() => (
+    <View
+      style={[styles.widgetHeader, {
+        height: ITEM_MIN_HEIGHT
+      }]}
+    >
+      <View style={styles.widgetHeaderIcon}/>
+      <Text
+        style={[styles.widgetHeaderLabel, {
+          color: theme.headerTextColor
+        }]}
+      >
+        {label}
+      </Text>
+    </View>
+  ), [theme, label]);
+
+  const contentBlock = useMemo(() => (
+    <View style={styles.widgetWrapperContainer}>
+      <View style={styles.widgetWrapper}>
+        {children}
+      </View>
+    </View>
+  ), [children]);
+
   return (
     <Animated.View
       style={{
         transform: [
-          { translateY: translate },
-          { scaleY: scale },
-          { scaleX: scale }
+          { translateY: animated.translate },
+          { scaleY: animated.scale },
+          { scaleX: animated.scale }
         ],
-        opacity: opacity
+        opacity: visible ? animated.opacity : 0,
+        height: visible ? 'auto' : 0,
       }}
     >
       <Animated.View
         style={{
           minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
-          height: ITEM_HEIGHT - offset
+          height: animated.offset
         }}
       >
         <BlurView
           tint={theme.blurTint}
           intensity={100}
           style={[styles.widgetBlurredContainer, {
-            marginBottom: margin
+            marginBottom: ITEM_OFFSET
           }]}
         >
-          <View
-            style={[styles.widgetHeader, {
-              height: ITEM_MIN_HEIGHT
-            }]}
-          >
-            <View style={styles.widgetHeaderIcon}/>
-            <Text
-              style={[styles.widgetHeaderLabel, {
-                color: theme.headerTextColor
-              }]}
-            >
-              {label}
-            </Text>
-          </View>
-          <View style={styles.widgetWrapperContainer}>
-            <View style={styles.widgetWrapper}>
-              {children}
-            </View>
-          </View>
+          {headerBlock}
+          {contentBlock}
         </BlurView>
       </Animated.View>
     </Animated.View>
