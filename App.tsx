@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Image, SafeAreaView, StatusBar, StatusBarStyle, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from 'react-native-appearance';
 import { randomColor, randomName } from './src/utils';
 import { WidgetsList } from './src/components';
 
@@ -25,8 +26,6 @@ const AppThemes: IAppTheme = {
     contentColor: '#FFFFFF'
   }
 };
-
-const appTheme = AppThemes[APP_THEME_NAME];
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -64,35 +63,38 @@ const styles = StyleSheet.create({
   }
 });
 
-const ITEMS = [...new Array(10)].map(() => ({
-  label: randomName(),
-  content: (
-    <View style={styles.widgetContent}>
-      {[...new Array(4)].map((item, idx) => (
-        <View key={`wiget_content_item_${idx}`}>
-          <TouchableOpacity
-            style={[styles.widgetContentIcon, {
-              backgroundColor: randomColor()
-            }]}
-            onPress={() => console.log('Icon clicked')}
-          />
-          <Text
-            style={[styles.widgetContentIconLabel, {
-              color: appTheme.contentColor
-            }]}
-          >
-            {randomName()}
-          </Text>
-        </View>
-      ))}
-    </View>
-  )
-}));
-
 const App = () => {
+  const colorScheme = useColorScheme();
+  const appTheme = useMemo(() => AppThemes[colorScheme], [colorScheme]);
+
   useEffect(() => {
     StatusBar.setBarStyle(appTheme.statusBar, true);
-  });
+  }, [appTheme]);
+
+  const ITEMS = useMemo(() => [...new Array(10)].map(() => ({
+    label: randomName(),
+    content: (
+      <View style={styles.widgetContent}>
+        {[...new Array(4)].map((item, idx) => (
+          <View key={`wiget_content_item_${idx}`}>
+            <TouchableOpacity
+              style={[styles.widgetContentIcon, {
+                backgroundColor: randomColor()
+              }]}
+              onPress={() => console.log('Icon clicked')}
+            />
+            <Text
+              style={[styles.widgetContentIconLabel, {
+                color: appTheme.contentColor
+              }]}
+            >
+              {randomName()}
+            </Text>
+          </View>
+        ))}
+      </View>
+    )
+  })), [appTheme]);
 
   return (
     <View style={styles.rootContainer}>
