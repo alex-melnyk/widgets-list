@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -37,9 +37,9 @@ type Props = {
 };
 
 export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
+  const velocityAnimation = useMemo(() => new Animated.Value(0), []);
   const [offset, setOffset] = useState(0);
   const [position, setPosition] = useState(0);
-  const [overScroll, setOverScroll] = useState(0);
 
   // CALLBACKS
   // const handleFakeListScroll = useCallback(({ nativeEvent: { contentOffset: { y } } }) => {
@@ -110,46 +110,42 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
     );
   });
 
-  // const fakeList = useMemo(() => {
-  //   const totalHeight = (ITEM_HEIGHT + ITEM_OFFSET) * items.length;
-  //
-  //   return (
-  //     <FlatList
-  //       contentContainerStyle={styles.scroll}
-  //       showsVerticalScrollIndicator={false}
-  //       scrollEventThrottle={16}
-  //       onScroll={handleFakeListScroll}
-  //       keyExtractor={(val, idx) => `item_${idx}`}
-  //       data={[0]}
-  //       renderItem={() => (
-  //         <View
-  //           pointerEvents="none"
-  //           style={{
-  //             height: totalHeight
-  //           }}
-  //         />
-  //       )}
-  //     />
-  //   )
-  // }, [items]);
-
-  const handleGestureEvent = useCallback(({ nativeEvent }: PanGestureHandlerGestureEvent) => {
+  const handleGestureEvent = ({ nativeEvent }: PanGestureHandlerGestureEvent) => {
     setOffset(nativeEvent.translationY * -1);
-  }, []);
 
-  const handleHandlerStateChange = useCallback(({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
+    const newPosition = position + nativeEvent.translationY * -1;
+    if (newPosition < 0) {
+      const path = Math.abs(newPosition);
+      const percent = 1 - path / (screenHeight * 1.8);
+      velocityAnimation.setValue(path * percent);
+    }
+  };
+
+  const handleHandlerStateChange = ({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
     if (nativeEvent.state === State.BEGAN) {
       setOffset(nativeEvent.translationY * -1);
     }
 
     if (nativeEvent.state === State.END) {
+      // const velocity = nativeEvent.velocityY / 100;
       setOffset(0);
 
       const newPosition = position + nativeEvent.translationY * -1;
 
       setPosition(newPosition >= 0 ? newPosition : 0);
+
+      // TODO: Back to ZERO
+
+      if (newPosition < 0) {
+        Animated.timing(velocityAnimation, {
+          duration: 250,
+          useNativeDriver: true,
+          easing: Easing.ease,
+          toValue: 0
+        }).start();
+      }
     }
-  }, [position]);
+  };
 
   return (
     <View style={styles.container}>
@@ -159,17 +155,16 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
         onGestureEvent={handleGestureEvent}
         onHandlerStateChange={handleHandlerStateChange}
       >
-        <View
+        <Animated.View
           style={[styles.widgetsListContainer, {
             transform: [
-              { translateY: overScroll }
+              { translateY: velocityAnimation }
             ]
           }]}
         >
           {itemsList}
-        </View>
+        </Animated.View>
       </PanGestureHandler>
-      {/*{fakeList}*/}
     </View>
   );
 };
