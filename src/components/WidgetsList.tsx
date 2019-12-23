@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 import {
   PanGestureHandler,
@@ -43,9 +43,8 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   const [position, setPosition] = useState(0);
   const [animatedValues, setAnimatedValues] = useState<WidgetAnimatedProps[]>([]);
   const positionAnimation = useMemo(() => new Animated.Value(0), []);
-  const velocityAnimation = useMemo(() => new Animated.Value(0), []);
   const totalHeight = useMemo(() => {
-    return animatedValues.length * ITEM_HEIGHT - screenHeight + ITEM_HEIGHT;
+    return animatedValues.length * ITEM_HEIGHT - screenHeight + ITEM_MIN_HEIGHT;
   }, [animatedValues]);
 
   useEffect(() => {
@@ -65,10 +64,11 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 
   useEffect(() => {
     const location = (position - offset) * -1;
-    const processingItems = location / ITEM_HEIGHT;
 
     animatedValues.forEach((animated, idx) => {
       const offsetSize = ITEM_HEIGHT + (ITEM_HEIGHT * idx - location);
+
+      animated.translate.setValue(location < 0 ? -location : 0);
 
       if (offsetSize < 0) {
         animated.height.setValue(0);
@@ -97,8 +97,6 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
         animated.scale.setValue(definedScale);
         animated.opacity.setValue(definedOpacity);
       }
-
-      // animated.scale.setValue(defineSize / ITEM_HEIGHT);
     });
   }, [position, offset, animatedValues]);
 
@@ -125,20 +123,11 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   }, [animatedValues]);
 
   const handleGestureEvent = ({ nativeEvent }: PanGestureHandlerGestureEvent) => {
-    const newPosition = position - nativeEvent.translationY * -1;
-
-    if (newPosition >= 0) {
-      velocityAnimation.setValue(newPosition);
-    } else {
-      velocityAnimation.setValue(0);
-    }
-
     setOffset(nativeEvent.translationY * -1);
   };
 
   const handleHandlerStateChange = ({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
     if (nativeEvent.state === State.BEGAN) {
-      velocityAnimation.stopAnimation();
       positionAnimation.stopAnimation();
 
       setOffset(nativeEvent.translationY * -1);
@@ -146,21 +135,43 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 
     if (nativeEvent.state === State.END) {
       const newPosition = position - offset;
-      positionAnimation.setValue(newPosition > 0 ? 0 : newPosition);
+      positionAnimation.setValue(newPosition);
       setOffset(0);
 
-      if (newPosition > 0) {
-        Animated.spring(velocityAnimation, {
-          useNativeDriver: true,
-          toValue: 0,
-          friction: 20
-        }).start();
-      } else if (Math.abs(newPosition) > (totalHeight)) {
+      const positionWithVelocity = newPosition + nativeEvent.velocityY * 0.15;
+
+      if (positionWithVelocity > 0) {
+        Animated.stagger(100, [
+          Animated.spring(positionAnimation, {
+            useNativeDriver: true,
+            friction: 10,
+            toValue: positionWithVelocity
+          }),
+          Animated.spring(positionAnimation, {
+            useNativeDriver: true,
+            toValue: 0,
+            friction: 10
+          })
+        ]).start();
+      } else if (Math.abs(positionWithVelocity) > (totalHeight)) {
+        Animated.stagger(100, [
+          Animated.spring(positionAnimation, {
+            useNativeDriver: true,
+            friction: 10,
+            toValue: positionWithVelocity
+          }),
+          Animated.spring(positionAnimation, {
+            useNativeDriver: true,
+            toValue: totalHeight * -1,
+            friction: 10
+          })
+        ]).start();
+      } else {
         Animated.spring(positionAnimation, {
           useNativeDriver: true,
-          toValue: totalHeight * -1,
-          friction: 20
-        }).start();
+          friction: 10,
+          toValue: positionWithVelocity
+        }).start()
       }
     }
   };
@@ -173,13 +184,7 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
         onGestureEvent={handleGestureEvent}
         onHandlerStateChange={handleHandlerStateChange}
       >
-        <Animated.View
-          style={[styles.widgetsListContainer, {
-            transform: [
-              { translateY: velocityAnimation }
-            ]
-          }]}
-        >
+        <Animated.View style={styles.widgetsListContainer}>
           {itemsList}
         </Animated.View>
       </PanGestureHandler>
