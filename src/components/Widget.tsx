@@ -14,9 +14,9 @@ export type IWidgetTheme = {
 export type WidgetAnimatedProps = {
   id: number;
   height: Animated.Value;
-  translate: Animated.Value;
   scale: Animated.Value;
   opacity: Animated.Value;
+  translate: Animated.Value;
 };
 
 type Props = {

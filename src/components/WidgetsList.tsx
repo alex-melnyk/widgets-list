@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 import {
   PanGestureHandler,
@@ -7,6 +7,8 @@ import {
   State
 } from 'react-native-gesture-handler';
 import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget, WidgetAnimatedProps } from './Widget';
+
+const MINIMUM_ITEM_HEIGHT = (ITEM_MIN_HEIGHT + 5);
 
 const {
   width: screenWidth,
@@ -37,10 +39,19 @@ type Props = {
 };
 
 export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
-  const velocityAnimation = useMemo(() => new Animated.Value(0), []);
   const [offset, setOffset] = useState(0);
   const [position, setPosition] = useState(0);
   const [animatedValues, setAnimatedValues] = useState<WidgetAnimatedProps[]>([]);
+  const positionAnimation = useMemo(() => new Animated.Value(0), []);
+  const velocityAnimation = useMemo(() => new Animated.Value(0), []);
+  const totalHeight = useMemo(() => {
+    return animatedValues.length * ITEM_HEIGHT - screenHeight + ITEM_HEIGHT;
+  }, [animatedValues]);
+
+  useEffect(() => {
+    const listener = positionAnimation.addListener(({ value }) => setPosition(value));
+    return () => positionAnimation.removeListener(listener);
+  }, [positionAnimation]);
 
   useEffect(() => {
     setAnimatedValues(items.map((val, idx) => ({
@@ -53,18 +64,20 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   }, [items]);
 
   useEffect(() => {
-    const minimumItemHeight = ITEM_MIN_HEIGHT + 5;
     const location = (position - offset) * -1;
     const processingItems = location / ITEM_HEIGHT;
 
     animatedValues.forEach((animated, idx) => {
       const offsetSize = ITEM_HEIGHT + (ITEM_HEIGHT * idx - location);
 
-      if (offsetSize < 0 || offsetSize > ITEM_HEIGHT) {
-        const visibility = offsetSize > 0;
-
-        animated.height.setValue(visibility ? ITEM_HEIGHT : 0);
-        animated.opacity.setValue(visibility ? 1 : 0);
+      if (offsetSize < 0) {
+        animated.height.setValue(0);
+        animated.opacity.setValue(0);
+        animated.scale.setValue(0.9);
+      } else if (offsetSize > ITEM_HEIGHT) {
+        animated.height.setValue(ITEM_HEIGHT);
+        animated.opacity.setValue(1.0);
+        animated.scale.setValue(1.0);
       } else {
         const definedSize = offsetSize >= ITEM_HEIGHT
           ? ITEM_HEIGHT
@@ -72,19 +85,13 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
             ? offsetSize
             : 0;
 
-        const definedScale = offsetSize <= minimumItemHeight
-          ? offsetSize / minimumItemHeight * 0.1 + 0.9
+        const definedScale = offsetSize <= MINIMUM_ITEM_HEIGHT
+          ? offsetSize / MINIMUM_ITEM_HEIGHT * 0.1 + 0.9
           : 1.0;
 
-        const definedOpacity = offsetSize <= minimumItemHeight
-          ? offsetSize / minimumItemHeight
+        const definedOpacity = offsetSize <= MINIMUM_ITEM_HEIGHT
+          ? offsetSize / MINIMUM_ITEM_HEIGHT
           : 1.0;
-
-        // const definedSize = offsetSize >= ITEM_MIN_HEIGHT
-        //   ? offsetSize >= ITEM_HEIGHT
-        //     ? ITEM_HEIGHT
-        //     : offsetSize
-        //   : ITEM_MIN_HEIGHT;
 
         animated.height.setValue(definedSize);
         animated.scale.setValue(definedScale);
@@ -118,22 +125,43 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   }, [animatedValues]);
 
   const handleGestureEvent = ({ nativeEvent }: PanGestureHandlerGestureEvent) => {
-    const currentOffset = nativeEvent.translationY * -1;
-    setOffset(currentOffset);
+    const newPosition = position - nativeEvent.translationY * -1;
+
+    if (newPosition >= 0) {
+      velocityAnimation.setValue(newPosition);
+    } else {
+      velocityAnimation.setValue(0);
+    }
+
+    setOffset(nativeEvent.translationY * -1);
   };
 
   const handleHandlerStateChange = ({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
     if (nativeEvent.state === State.BEGAN) {
+      velocityAnimation.stopAnimation();
+      positionAnimation.stopAnimation();
+
       setOffset(nativeEvent.translationY * -1);
     }
 
     if (nativeEvent.state === State.END) {
-      // const velocity = nativeEvent.velocityY / 100;
+      const newPosition = position - offset;
+      positionAnimation.setValue(newPosition > 0 ? 0 : newPosition);
       setOffset(0);
 
-      const newPosition = position - offset;
-
-      setPosition(newPosition <= 0 ? newPosition : 0);
+      if (newPosition > 0) {
+        Animated.spring(velocityAnimation, {
+          useNativeDriver: true,
+          toValue: 0,
+          friction: 20
+        }).start();
+      } else if (Math.abs(newPosition) > (totalHeight)) {
+        Animated.spring(positionAnimation, {
+          useNativeDriver: true,
+          toValue: totalHeight * -1,
+          friction: 20
+        }).start();
+      }
     }
   };
 
