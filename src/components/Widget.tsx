@@ -11,24 +11,25 @@ export type IWidgetTheme = {
   headerTextColor: string;
 };
 
+export type WidgetAnimatedProps = {
+  id: number;
+  height: Animated.Value;
+  translate: Animated.Value;
+  scale: Animated.Value;
+  opacity: Animated.Value;
+};
+
 type Props = {
   theme: IWidgetTheme
-  animated: {
-    translate: number;
-    scale: number;
-    opacity: number;
-    offset: number;
-  };
+  animated: WidgetAnimatedProps;
   label: string;
-  visible?: boolean;
 };
 
 export const Widget: React.FC<Props> = ({
   children,
   theme,
   animated,
-  label,
-  visible
+  label
 }) => {
   const headerBlock = useMemo(() => (
     <View
@@ -63,14 +64,13 @@ export const Widget: React.FC<Props> = ({
           { scaleY: animated.scale },
           { scaleX: animated.scale }
         ],
-        opacity: visible ? animated.opacity : 0,
-        height: visible ? 'auto' : 0,
+        opacity: animated.opacity
       }}
     >
       <Animated.View
         style={{
           minHeight: ITEM_MIN_HEIGHT + ITEM_OFFSET,
-          height: animated.offset
+          height: animated.height
         }}
       >
         <BlurView

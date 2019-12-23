@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
   PanGestureHandlerStateChangeEvent,
   State
 } from 'react-native-gesture-handler';
-import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget } from './Widget';
+import { ITEM_HEIGHT, ITEM_MIN_HEIGHT, ITEM_OFFSET, IWidgetTheme, Widget, WidgetAnimatedProps } from './Widget';
 
 const {
   width: screenWidth,
@@ -40,67 +40,86 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   const velocityAnimation = useMemo(() => new Animated.Value(0), []);
   const [offset, setOffset] = useState(0);
   const [position, setPosition] = useState(0);
+  const [animatedValues, setAnimatedValues] = useState<WidgetAnimatedProps[]>([]);
+
+  useEffect(() => {
+    setAnimatedValues(items.map((val, idx) => ({
+      id: idx,
+      height: new Animated.Value(ITEM_HEIGHT), // 0
+      scale: new Animated.Value(1.0), // 1.0
+      opacity: new Animated.Value(1.0), // 1.0
+      translate: new Animated.Value(0), // ITEM_OFFSET
+    })));
+  }, [items]);
+
+  useEffect(() => {
+    const minimumItemHeight = ITEM_MIN_HEIGHT + 5;
+    const location = (position - offset) * -1;
+    const processingItems = location / ITEM_HEIGHT;
+
+    animatedValues.forEach((animated, idx) => {
+      const offsetSize = ITEM_HEIGHT + (ITEM_HEIGHT * idx - location);
+
+      if (offsetSize < 0 || offsetSize > ITEM_HEIGHT) {
+        const visibility = offsetSize > 0;
+
+        animated.height.setValue(visibility ? ITEM_HEIGHT : 0);
+        animated.opacity.setValue(visibility ? 1 : 0);
+      } else {
+        const definedSize = offsetSize >= ITEM_HEIGHT
+          ? ITEM_HEIGHT
+          : offsetSize >= 0
+            ? offsetSize
+            : 0;
+
+        const definedScale = offsetSize <= minimumItemHeight
+          ? offsetSize / minimumItemHeight * 0.1 + 0.9
+          : 1.0;
+
+        const definedOpacity = offsetSize <= minimumItemHeight
+          ? offsetSize / minimumItemHeight
+          : 1.0;
+
+        // const definedSize = offsetSize >= ITEM_MIN_HEIGHT
+        //   ? offsetSize >= ITEM_HEIGHT
+        //     ? ITEM_HEIGHT
+        //     : offsetSize
+        //   : ITEM_MIN_HEIGHT;
+
+        animated.height.setValue(definedSize);
+        animated.scale.setValue(definedScale);
+        animated.opacity.setValue(definedOpacity);
+      }
+
+      // animated.scale.setValue(defineSize / ITEM_HEIGHT);
+    });
+  }, [position, offset, animatedValues]);
 
   // RENDERS
-  const animatedValues = items.map((val, idx) => ({
-    id: idx,
-    offset: ITEM_HEIGHT, // 0
-    scale: 1.0, // 1.0
-    opacity: 1.0, // 1.0
-    translate: 0, // ITEM_OFFSET
-  }));
-
-  const location = position + offset;
-  const effort = location / ITEM_HEIGHT;
-  const count = Math.abs(effort);
-
-  // const totalVisibleElements = Math.round(screenHeight / ITEM_HEIGHT) + 3;
-  // const invisibleElements = Math.floor(location / (ITEM_HEIGHT + ITEM_OFFSET)) - 1;
-
-  const startOffset = ITEM_HEIGHT - ITEM_MIN_HEIGHT - ITEM_OFFSET;
-  const itemHeightWithOffset = ITEM_HEIGHT + ITEM_MIN_HEIGHT;
-  const opacityDiv = ITEM_HEIGHT / 2;
-  const scaleMul = ITEM_HEIGHT * 5;
-
-  const itemsList = items.map((item, idx) => {
-    // const visible = idx >= invisibleElements && idx < invisibleElements + totalVisibleElements;
-
-    const animatedValue = animatedValues[idx];
-
-    if (location >= 0 && idx <= count) {
-      const delta = location - (ITEM_HEIGHT * idx);
-      const deltaStart = delta - startOffset;
-
-      animatedValue.offset = delta > ITEM_HEIGHT || delta < 0
-        ? 0
-        : ITEM_HEIGHT - delta;
-
-      if (delta >= startOffset && delta <= itemHeightWithOffset) {
-        animatedValue.opacity = 1.0 - deltaStart / opacityDiv;
-        animatedValue.scale = 1.0 - deltaStart / scaleMul;
-        const ty = delta - startOffset;
-        animatedValue.translate = ty < 0 ? 0 : ty / 10;
-      } else if (delta >= ITEM_HEIGHT) {
-        animatedValue.scale = 0;
-        animatedValue.opacity = 0;
-      }
+  const itemsList = useMemo(() => {
+    if (!animatedValues.length) {
+      return null;
     }
 
-    return (
-      <Widget
-        key={`widget_${idx}`}
-        theme={THEMES[themeName]}
-        animated={animatedValue}
-        label={item.label}
-        visible={true}
-      >
-        {item.content}
-      </Widget>
-    );
-  });
+    return items.map((item, idx) => {
+      const animatedValue = animatedValues[idx];
+
+      return (
+        <Widget
+          key={`widget_${idx}`}
+          theme={THEMES[themeName]}
+          animated={animatedValue}
+          label={item.label}
+        >
+          {item.content}
+        </Widget>
+      );
+    })
+  }, [animatedValues]);
 
   const handleGestureEvent = ({ nativeEvent }: PanGestureHandlerGestureEvent) => {
-    setOffset(nativeEvent.translationY * -1);
+    const currentOffset = nativeEvent.translationY * -1;
+    setOffset(currentOffset);
   };
 
   const handleHandlerStateChange = ({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
@@ -112,9 +131,9 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
       // const velocity = nativeEvent.velocityY / 100;
       setOffset(0);
 
-      const newPosition = position + offset;
+      const newPosition = position - offset;
 
-      setPosition(newPosition >= 0 ? newPosition : 0);
+      setPosition(newPosition <= 0 ? newPosition : 0);
     }
   };
 
