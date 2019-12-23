@@ -41,17 +41,6 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
   const [offset, setOffset] = useState(0);
   const [position, setPosition] = useState(0);
 
-  // CALLBACKS
-  // const handleFakeListScroll = useCallback(({ nativeEvent: { contentOffset: { y } } }) => {
-  //   if (y <= 0) {
-  //     setOverScroll(Math.abs(y));
-  //   } else {
-  //     setOverScroll(0);
-  //   }
-  //
-  //   setPosition(y);
-  // }, [overScroll]);
-
   // RENDERS
   const animatedValues = items.map((val, idx) => ({
     id: idx,
@@ -112,13 +101,6 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
 
   const handleGestureEvent = ({ nativeEvent }: PanGestureHandlerGestureEvent) => {
     setOffset(nativeEvent.translationY * -1);
-
-    const newPosition = position + nativeEvent.translationY * -1;
-    if (newPosition < 0) {
-      const path = Math.abs(newPosition);
-      const percent = 1 - path / (screenHeight * 1.8);
-      velocityAnimation.setValue(path * percent);
-    }
   };
 
   const handleHandlerStateChange = ({ nativeEvent }: PanGestureHandlerStateChangeEvent) => {
@@ -130,20 +112,9 @@ export const WidgetsList: React.FC<Props> = ({ themeName, items }) => {
       // const velocity = nativeEvent.velocityY / 100;
       setOffset(0);
 
-      const newPosition = position + nativeEvent.translationY * -1;
+      const newPosition = position + offset;
 
       setPosition(newPosition >= 0 ? newPosition : 0);
-
-      // TODO: Back to ZERO
-
-      if (newPosition < 0) {
-        Animated.timing(velocityAnimation, {
-          duration: 250,
-          useNativeDriver: true,
-          easing: Easing.ease,
-          toValue: 0
-        }).start();
-      }
     }
   };
 
